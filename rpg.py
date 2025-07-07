@@ -36,7 +36,7 @@ class Hero:
             self.level_up(show_message=False)
             levelup_info.append((self.level, self.hp_up, self.weapon_val_up, self.player_hp, self.max_hp, self.next_exp))
             levelup_count += 1
-            self.skill_used = False  # レベルアップ時にスキル再使用可能
+            self.skill_used = False
         if levelup_count > 0:
             for i, info in enumerate(levelup_info):
                 level, hp_up, weapon_val_up, player_hp, max_hp, next_exp = info
@@ -51,7 +51,7 @@ class Hero:
         self.level += 1
         self.hp_up = round(3 * (1 + self.level * 0.3))
         self.max_hp += self.hp_up
-        self.player_hp = self.max_hp  # レベルアップ時に全回復
+        self.player_hp = self.max_hp
         self.weapon_val_up = round(5 * (1 + self.level * 0.3))
         self.weapon_val += self.weapon_val_up
         if self.level == 1:
@@ -65,7 +65,6 @@ class Hero:
             slow_print(f"次のレベルまで: {self.next_exp} 経験値")
 
     def skill(self):
-        # 継承先で実装
         pass
 
     def enemy(self, enemy_types):
@@ -137,7 +136,7 @@ class Necromancer(Hero):
         super().__init__()
         self.player_weapon = "死霊術"
         self.weapon_val = 15
-        self.allies = []  # 仲間リスト（倒した敵）
+        self.allies = []
 
     def attack(self):
         total_damage = self.weapon_val + random.randint(-5, 5)
@@ -171,7 +170,6 @@ class RPG:
             slow_print("ジョブを選択してください：")
             slow_print("1: 剣士")
             slow_print("2: 魔法使い")
-            # シークレットジョブは表示しない
             choice = input("番号を入力: ")
             if choice == "1":
                 slow_print("剣士を選択しました。\n")
@@ -206,7 +204,6 @@ class RPG:
                 slow_print(f"\n{self.player.enemy_type}を倒した！")
                 exp_gain = enemy_types[self.player.enemy_type][2]
                 self.player.gain_exp(exp_gain)
-                # ネクロマンサーなら仲間に追加
                 if isinstance(self.player, Necromancer):
                     ally = {
                         'name': self.player.enemy_type,
