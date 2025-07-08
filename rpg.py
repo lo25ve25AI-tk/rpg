@@ -2,12 +2,38 @@ import random
 import sys
 import time
 import string
+import ctypes
 
-def slow_print(text, delay=0.04):
-    for c in text:
+ENABLE_PROCESSED_OUTPUT = 0x0001
+ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002
+ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+MODE = ENABLE_PROCESSED_OUTPUT + ENABLE_WRAP_AT_EOL_OUTPUT + ENABLE_VIRTUAL_TERMINAL_PROCESSING
+
+kernel32 = ctypes.windll.kernel32
+handle = kernel32.GetStdHandle(-11)
+kernel32.SetConsoleMode(handle, MODE)
+
+
+def slow_print(text, delay=0.04, color=None, hp_color=None):
+    color_codes = {
+        'red': '\033[31m',
+        'blue': '\033[34m',
+        'purple': '\033[35m',
+        None: ''
+    }
+    reset_code = '\033[0m'
+    def colorize_hp(s):
+        if hp_color in color_codes and 'HP' in s:
+            return s.replace('HP', f"{color_codes[hp_color]}HP{reset_code}{color_codes.get(color, '')}")
+        return s
+    if color in color_codes:
+        sys.stdout.write(color_codes[color])
+    for c in colorize_hp(text):
         sys.stdout.write(c)
         sys.stdout.flush()
         time.sleep(delay)
+    if color in color_codes:
+        sys.stdout.write(reset_code)
     print()
 
 def time_gauge_bar(elapsed, total=60, bar_length=10):
@@ -125,34 +151,34 @@ class Hero:
             return
         target = alive[0]  # 先頭（A→B→C順）
         damage = self.weapon_val + random.randint(-5, 5)
-        slow_print(f"あなたの{self.player_weapon}攻撃！ {target['name']}に{damage}ダメージ！")
+        slow_print(f"あなたの{self.player_weapon}攻撃！ {target['name']}に{damage}ダメージ！", color='blue')
         target['hp'] -= damage
         if target['hp'] < 0:
             target['hp'] = 0
-        slow_print(f"{target['name']}のHP: {target['hp']}\n")
+        slow_print(f"{target['name']}のHP: {target['hp']}\n", hp_color='red')
 
     def enemy_attack(self):
-        slow_print("敵の攻撃！")
+        slow_print("敵の攻撃！", color='red')
         # 通常: プレイヤーのみ攻撃
         if not isinstance(self, Necromancer):
             for e in self.enemies:
                 if e['hp'] > 0:
                     damage = e['attack'] + random.randint(-5, 5)
-                    slow_print(f"{e['name']}の攻撃！ {damage}ダメージ！")
+                    slow_print(f"{e['name']}の攻撃！ {damage}ダメージ！", color='red')
                     self.player_hp -= damage
                     if self.player_hp < 0:
                         self.player_hp = 0
-                    slow_print(f"あなたのHP: {self.player_hp}")
+                    slow_print(f"あなたのHP: {self.player_hp}", hp_color='blue')
         else:
             # ネクロマンサー: プレイヤー＋味方全員に攻撃
             for e in self.enemies:
                 if e['hp'] > 0:
                     damage = e['attack'] + random.randint(-5, 5)
-                    slow_print(f"{e['name']}の攻撃！ {damage}ダメージ！")
+                    slow_print(f"{e['name']}の攻撃！ {damage}ダメージ！", color='red')
                     self.player_hp -= damage
                     if self.player_hp < 0:
                         self.player_hp = 0
-                    slow_print(f"あなたのHP: {self.player_hp}")
+                    slow_print(f"あなたのHP: {self.player_hp}", hp_color='blue')
                     # 味方にもダメージ
                     for ally in self.allies:
                         ally['hp'] -= damage
@@ -184,11 +210,11 @@ class Sorder(Hero):
         for e in self.enemies:
             if e['hp'] > 0:
                 damage = self.weapon_val * 2 + random.randint(0, 10)
-                slow_print(f"スキル『渾身の斬撃』発動！ {e['name']}に{damage}ダメージ！")
+                slow_print(f"スキル『渾身の斬撃』発動！ {e['name']}に{damage}ダメージ！", color='blue')
                 e['hp'] -= damage
                 if e['hp'] < 0:
                     e['hp'] = 0
-                slow_print(f"{e['name']}のHP: {e['hp']}")
+                slow_print(f"{e['name']}のHP: {e['hp']}", hp_color='red')
         self.skill_used = True
 
 class Mage(Hero):
@@ -206,11 +232,11 @@ class Mage(Hero):
         for e in self.enemies:
             if e['hp'] > 0:
                 damage = self.weapon_val * 2 + random.randint(10, 20)
-                slow_print(f"スキル『ファイアボール』発動！ {e['name']}に{damage}ダメージ！")
+                slow_print(f"スキル『ファイアボール』発動！ {e['name']}に{damage}ダメージ！", color='blue')
                 e['hp'] -= damage
                 if e['hp'] < 0:
                     e['hp'] = 0
-                slow_print(f"{e['name']}のHP: {e['hp']}")
+                slow_print(f"{e['name']}のHP: {e['hp']}", hp_color='red')
         self.skill_used = True
 
 class Necromancer(Hero):
@@ -229,21 +255,21 @@ class Necromancer(Hero):
             return
         target = alive[0]
         total_damage = self.weapon_val + random.randint(-5, 5)
-        slow_print(f"あなたの{self.player_weapon}攻撃！ {target['name']}に{total_damage}ダメージ！")
+        slow_print(f"あなたの{self.player_weapon}攻撃！ {target['name']}に{total_damage}ダメージ！", color='blue')
         target['hp'] -= total_damage
         if target['hp'] < 0:
             target['hp'] = 0
-        slow_print(f"{target['name']}のHP: {target['hp']}")
+        slow_print(f"{target['name']}のHP: {target['hp']}", hp_color='red')
         # 仲間がいれば加勢
         if self.allies:
-            slow_print("仲間が加勢！")
+            slow_print("仲間が加勢！", color='blue')
             for ally in self.allies:
                 ally_damage = ally['attack'] + random.randint(-2, 2)
-                slow_print(f"{ally['name']}の攻撃！ {ally_damage}ダメージ！")
+                slow_print(f"{ally['name']}の攻撃！ {ally_damage}ダメージ！", color='blue')
                 target['hp'] -= ally_damage
                 if target['hp'] < 0:
                     target['hp'] = 0
-                slow_print(f"{target['name']}のHP: {target['hp']}")
+                slow_print(f"{target['name']}のHP: {target['hp']}", hp_color='red')
 
     def skill(self):
         if self.skill_used:
@@ -253,11 +279,11 @@ class Necromancer(Hero):
         for e in self.enemies:
             if e['hp'] > 0:
                 base_damage = int(self.weapon_val * 2.5 + len(self.allies) * 10)
-                slow_print(f"スキル『死霊の奔流』発動！ {e['name']}に{base_damage}ダメージ！")
+                slow_print(f"スキル『死霊の奔流』発動！ {e['name']}に{base_damage}ダメージ！", color='blue')
                 e['hp'] -= base_damage
                 if e['hp'] < 0:
                     e['hp'] = 0
-                slow_print(f"{e['name']}のHP: {e['hp']}")
+                slow_print(f"{e['name']}のHP: {e['hp']}", hp_color='red')
         if not self.ally_buffed:
             self.ally_buffed = True
             slow_print("これから仲間になる死霊たちの力が高まる！（攻撃・HPが1.2倍）\n")
@@ -298,10 +324,10 @@ class RPG:
         slow_print("\n=== RPG戦闘システム ===")
         while self.player.is_alive() and self.player.is_enemy_alive():
             slow_print(f"\nあなたのレベル: {self.player.level} ({self.player.job})")
-            slow_print(f"あなたのHP: {self.player.player_hp}")
+            slow_print(f"あなたのHP: {self.player.player_hp}", hp_color='blue')
             for e in self.player.enemies:
                 if e['hp'] > 0:
-                    slow_print(f"{e['name']} HP: {e['hp']}")
+                    slow_print(f"{e['name']} HP: {e['hp']}", hp_color='red')
             if not self.player.skill_used:
                 slow_print("1: 通常攻撃  2: スキル（1回のみ）")
                 action = input("行動を選択してください: ")
