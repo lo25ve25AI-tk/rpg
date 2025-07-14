@@ -401,5 +401,4 @@ def main():
     slow_print("Made by tk.")
     slow_print("隠し要素を探してみてね！")
 
-if __name__ == "__main__":
-    main() 
+main() 
