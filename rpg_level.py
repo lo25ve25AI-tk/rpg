@@ -22,9 +22,13 @@ class Hero:
         self.skill_used = False
         self.enemies = []  # 複数エネミー管理
 
-    def gain_exp(self, amount):
-        self.exp += amount
-        slow_print(f"経験値を{amount}獲得！")
+    def gain_exp(self, amount, battle_count=0):
+        if battle_count == 0:
+            bonus = amount
+        else:
+            bonus = int(amount * (1 + battle_count * 0.15))
+        self.exp += bonus
+        slow_print(f"経験値を{bonus}獲得！")
         levelup_count = 0
         levelup_info = []
         while self.exp >= self.next_exp:
@@ -312,7 +316,7 @@ class RPG:
                 if 'defeated' not in e and e['hp'] <= 0:
                     slow_print(f"\n{e['name']}を倒した！")
                     exp_gain = enemy_types[e['type']][2]
-                    self.player.gain_exp(exp_gain)
+                    self.player.gain_exp(exp_gain, self.battle_count)
                     e['defeated'] = True
                     # ネクロマンサーなら仲間に追加
                     if isinstance(self.player, Necromancer):
@@ -414,5 +418,5 @@ def main():
     slow_print("Made by tk.")
     slow_print("隠し要素を探してみてね！")
 
-
-main() 
+if __name__ == "__main__":
+    main() 
