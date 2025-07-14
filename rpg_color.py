@@ -54,9 +54,13 @@ class Hero:
         self.skill_used = False
         self.enemies = []  # 複数エネミー管理
 
-    def gain_exp(self, amount):
-        self.exp += amount
-        slow_print(f"経験値を{amount}獲得！")
+    def gain_exp(self, amount, battle_count=0):
+        if battle_count == 0:
+            bonus = amount
+        else:
+            bonus = int(amount * (1 + battle_count * 0.15))
+        self.exp += bonus
+        slow_print(f"経験値を{bonus}獲得！")
         levelup_count = 0
         levelup_info = []
         while self.exp >= self.next_exp:
@@ -340,12 +344,14 @@ class RPG:
                 action = input("行動を選択してください: ")
                 self.player.attack()
             # ここから個別撃破ごとに経験値処理
+            defeated_names = []
             for e in self.player.enemies:
                 if 'defeated' not in e and e['hp'] <= 0:
                     slow_print(f"\n{e['name']}を倒した！")
                     exp_gain = enemy_types[e['type']][2]
-                    self.player.gain_exp(exp_gain)
+                    self.player.gain_exp(exp_gain, self.battle_count)
                     e['defeated'] = True
+                    defeated_names.append(e['name'])
                     # ネクロマンサーなら仲間に追加
                     if isinstance(self.player, Necromancer):
                         hp = int(enemy_types[e['type']][0] // 2)
@@ -362,6 +368,8 @@ class RPG:
                         }
                         self.player.allies.append(ally)
                         slow_print(f"{e['name']}が仲間になった！（HP:{ally['hp']} 攻撃:{ally['attack']}）\n")
+            # HP0の敵をリストから削除
+            self.player.enemies = [e for e in self.player.enemies if e['hp'] > 0]
             if not self.player.is_enemy_alive():
                 break
             self.player.enemy_attack()
