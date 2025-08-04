@@ -417,6 +417,3 @@ def main():
     slow_print('Thank you for playing!')
     slow_print("Made by tk.")
     slow_print("隠し要素を探してみてね！")
-
-if __name__ == "__main__":
-    main() 
